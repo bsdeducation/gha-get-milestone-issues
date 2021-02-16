@@ -1,5 +1,5 @@
 {
-  "name": "get-milestone-issues-action",
+  "name": "gha-get-milestone-issues",
   "version": "0.0.1",
   "description": "",
   "main": "index.js",

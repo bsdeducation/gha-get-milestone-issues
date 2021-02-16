@@ -10,13 +10,13 @@ const github = __nccwpck_require__(438);
 const { graphql } = __nccwpck_require__(668);
 
 async function getMilestoneIssues({
-  owner,
-  repository: repoName,
-  milestoneTitle,
-  token,
+  repository: repoAndOwner,
+  milestone: milestoneString,
   classifierLabels,
+  githubToken,
 }) {
-  const octokit = github.getOctokit(token);
+  const [owner, repoName] = repoAndOwner.split('/');
+  const octokit = github.getOctokit(githubToken);
 
   const allMilestones = await octokit.request(
     `GET /repos/${owner}/${repoName}/milestones`
@@ -24,19 +24,19 @@ async function getMilestoneIssues({
   if (allMilestones.data) {
     const matchingMilestones = allMilestones.data.filter(
       (milestone) =>
-        milestone.state === "open" && milestone.title.includes(milestoneTitle)
+        milestone.state === "open" && milestone.title.includes(milestoneString)
     );
     if (matchingMilestones.length === 0) {
       throw new Error(
-        `Failed to find an open milestone matching '${milestoneTitle}`
+        `Failed to find an open milestone matching '${milestoneString}'.`
       );
     } else if (matchingMilestones.length > 1) {
       throw new Error(
-        `Ambiguous milestone ID '${milestoneTitle}. Found ${matchingMilestones.length} milestones.`
+        `Ambiguous milestone ID '${milestoneString}'. Found ${matchingMilestones.length} milestones.`
       );
     }
     const milestoneNumber = matchingMilestones[0].number;
-    console.log(`Milestone ${milestoneNumber} matches '${milestoneTitle}'`);
+    console.log(`Milestone ${milestoneNumber} matches '${milestoneString}'`);
 
     const { repository } = await graphql(`
     {
@@ -61,7 +61,7 @@ async function getMilestoneIssues({
     `,
       {
         headers: {
-          authorization: `token ${token}`,
+          authorization: `token ${githubToken}`,
         },
       }
     );
@@ -78,8 +78,10 @@ async function getMilestoneIssues({
     issues = groupBy(issues, ({labels, ...rest}) => labels[0]);
     issues = mapValues(issues, (labelIssues) => labelIssues.map(({labels, ...rest}) => rest));
     return {
-        objects: issues,
-        text: mapValues(issues, (labelIssues) => labelIssues.map(({number, title}) => `#${number} ${title}`).join('\n')),
+        milestoneNumber,
+        milestoneTitle: matchingMilestones[0].title,
+        issues,
+        issuesText: mapValues(issues, (labelIssues) => labelIssues.map(({number, title}) => `#${number} ${title}`).join('\n')),
     }
   } else {
     return {};
@@ -97,24 +99,18 @@ module.exports = getMilestoneIssues;
 const core = __nccwpck_require__(186);
 const getMilestoneIssues = __nccwpck_require__(959);
 
-function getInputs() {
-  const requiredOptions = { required: true };
-
-  const repository = core.getInput("repository", requiredOptions);
-  const milestoneTitle = core.getInput("milestoneTitle", requiredOptions);
-  const githubToken = process.env.GITHUB_TOKEN;
-
-  return {
-    repository,
-    milestoneTitle,
-    githubToken,
-  };
-}
-
 async function run() {
   try {
-    const { repository, milestoneTitle, githubToken } = getInputs();
-    const issues = await getMilestoneIssues({repository, milestoneTitle, githubToken});
+    const repository = core.getInput("repository", requiredOptions);
+    const milestone = core.getInput("milestone", requiredOptions);
+    const classifierLabels = core.getInput("classifierLabels", requiredOptions);
+    const githubToken = process.env.GITHUB_TOKEN;
+    
+    const {milestoneNumber,
+      milestoneTitle,
+      issues,
+      issuesText
+    } = await getMilestoneIssues({repository, milestone, classifierLabels, githubToken});
 
     console.log(issues);
     core.setOutput('issues', issues);
