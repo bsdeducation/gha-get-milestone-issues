@@ -99,6 +99,8 @@ module.exports = getMilestoneIssues;
 const core = __nccwpck_require__(186);
 const getMilestoneIssues = __nccwpck_require__(959);
 
+const requiredOptions = { required: true };
+
 async function run() {
   try {
     const repository = core.getInput("repository", requiredOptions);

@@ -1,6 +1,8 @@
 const core = require("@actions/core");
 const getMilestoneIssues = require('./getMilestoneIssues');
 
+const requiredOptions = { required: true };
+
 async function run() {
   try {
     const repository = core.getInput("repository", requiredOptions);
