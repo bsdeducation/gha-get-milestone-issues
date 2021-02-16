@@ -115,7 +115,10 @@ async function run() {
     } = await getMilestoneIssues({repository, milestone, classifierLabels, githubToken});
 
     console.log(issues);
+    core.setOutput('milestoneNumber', milestoneNumber);
+    core.setOutput('milestoneTitle', milestoneTitle);
     core.setOutput('issues', issues);
+    core.setOutput('issuesText', issuesText);
   } catch (error) {
     console.log('Error => ', error);
     core.setFailed(error.message);
