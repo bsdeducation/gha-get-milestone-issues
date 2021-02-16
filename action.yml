@@ -1,0 +1,24 @@
+name: "Get Milestone Issues"
+description: "Get Milestone Issues"
+inputs:
+  repository:
+    description: "Name of the target repo"
+    required: true
+  milestone:
+    description: "A string to uniquely identify the milestone. Needs to be part of the title and only one open milestone should match this string."
+    required: true
+  classifierLabels:
+    description: "A comma-separated list of labels. Only issues with one of these labels will be returned. Also, these labels are used for grouping the issues in the response."
+    required: true
+outputs:
+  milestoneNumber:
+    description: "Milestone number which matched the 'milestone' parameter."
+  milestoneTitle: 
+    description: "Milestone title which matched the 'milestone' parameter."
+  issues:
+    description: "Stringified object with classifierLabels as the attributes. "
+  issuesText:
+    description: "Stringified object with classifierLabels as the attributes. "
+runs:
+  using: "node12"
+  main: "dist/index.js"
